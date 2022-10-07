@@ -31,7 +31,7 @@ public class Main {
         fileRead.stream()
                 .parallel()
                 .forEach(s -> {
-                    System.out.println("The writing thread name is: " + Thread.currentThread().getName());
+                    System.out.println("The reading thread name is: " + Thread.currentThread().getName());
                     List<String> list = Arrays.asList(s.split(";"));
                     participantService.saveParticipant(new Participant(list.get(0), list.get(1), LocalDateTime.parse(list.get(2), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
         });
@@ -40,7 +40,7 @@ public class Main {
         participants.stream()
                 .parallel()
                 .forEach(participant -> {
-                    System.out.println("The reading thread name is: " + Thread.currentThread().getName());
+                    System.out.println("The writing thread name is: " + Thread.currentThread().getName());
                     LocalDateTime localDateTime = participant.getDate();
 
                     int age = signService.getAge(localDateTime);
