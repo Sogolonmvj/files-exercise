@@ -11,6 +11,7 @@ import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class Main {
 
@@ -26,34 +27,42 @@ public class Main {
 
         fileService.write(groupFile, participantService.findAll());
 
+        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
+
         List<String> fileRead = fileService.readLines(groupFile);
-        fileRead.forEach(s -> {
-            List<String> list = Arrays.asList(s.split(";"));
-            participantService.saveParticipant(new Participant(list.get(0), list.get(1), LocalDateTime.parse(list.get(2), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
+        fileRead.stream()
+                .parallel()
+                .forEach(s -> {
+                    System.out.println("Nome da thread de leitura: " + Thread.currentThread().getName());
+                    List<String> list = Arrays.asList(s.split(";"));
+                    participantService.saveParticipant(new Participant(list.get(0), list.get(1), LocalDateTime.parse(list.get(2), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
         });
 
         List<Participant> participants = participantService.getParticipants();
-        participants.forEach(participant -> {
-            LocalDateTime localDateTime = participant.getDate();
+        participants.stream()
+                .parallel()
+                .forEach(participant -> {
+                    System.out.println("O nome da thread de escrita é: " + Thread.currentThread().getName());
+                    LocalDateTime localDateTime = participant.getDate();
 
-            int age = signService.getAge(localDateTime);
-            boolean isLeapYear = signService.isLeapYear(localDateTime);
-            String formattedDate = signService.format(localDateTime);
-            String timeZone = String.valueOf(signService.timeZone(localDateTime, participant.getZone()));
-            Sign sign = new SignFactory().create(MonthDay.of(localDateTime.getMonth(), localDateTime.getDayOfMonth()));
-            String risingSign = sign.getRisingSign(localDateTime.toLocalTime());
+                    int age = signService.getAge(localDateTime);
+                    boolean isLeapYear = signService.isLeapYear(localDateTime);
+                    String formattedDate = signService.format(localDateTime);
+                    String timeZone = String.valueOf(signService.timeZone(localDateTime, participant.getZone()));
+                    Sign sign = new SignFactory().create(MonthDay.of(localDateTime.getMonth(), localDateTime.getDayOfMonth()));
+                    String risingSign = sign.getRisingSign(localDateTime.toLocalTime());
 
-            Path participantFile = Path.of(USER_DIR, "files", participant.getName().replaceAll(" ", "_") + ".txt");
-            String info = "Name: " + participant.getName() + "\n" +
-                    "Zone: " + participant.getZone() + "\n" +
-                    "TimeZone: " + timeZone + "\n" +
-                    "Age: " + age + "\n" +
-                    "Leap Year: " + isLeapYear + "\n" +
-                    "Birth Date: " + formattedDate + "\n" +
-                    "Sign: " + sign + "\n" +
-                    "Rising Sign: " + risingSign + "\n";
+                    Path participantFile = Path.of(USER_DIR, "files", participant.getName().replaceAll(" ", "_") + ".txt");
+                    String info = "Name: " + participant.getName() + "\n" +
+                            "Zone: " + participant.getZone() + "\n" +
+                            "TimeZone: " + timeZone + "\n" +
+                            "Age: " + age + "\n" +
+                            "Leap Year: " + isLeapYear + "\n" +
+                            "Birth Date: " + formattedDate + "\n" +
+                            "Sign: " + sign + "\n" +
+                            "Rising Sign: " + risingSign + "\n";
 
-            fileService.write(participantFile, info);
+                    fileService.write(participantFile, info);
         });
 
     }
