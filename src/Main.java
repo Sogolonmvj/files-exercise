@@ -27,13 +27,11 @@ public class Main {
 
         fileService.write(groupFile, participantService.findAll());
 
-        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
-
         List<String> fileRead = fileService.readLines(groupFile);
         fileRead.stream()
                 .parallel()
                 .forEach(s -> {
-                    System.out.println("Nome da thread de leitura: " + Thread.currentThread().getName());
+                    System.out.println("The writing thread name is: " + Thread.currentThread().getName());
                     List<String> list = Arrays.asList(s.split(";"));
                     participantService.saveParticipant(new Participant(list.get(0), list.get(1), LocalDateTime.parse(list.get(2), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
         });
@@ -42,7 +40,7 @@ public class Main {
         participants.stream()
                 .parallel()
                 .forEach(participant -> {
-                    System.out.println("O nome da thread de escrita é: " + Thread.currentThread().getName());
+                    System.out.println("The reading thread name is: " + Thread.currentThread().getName());
                     LocalDateTime localDateTime = participant.getDate();
 
                     int age = signService.getAge(localDateTime);
